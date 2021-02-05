@@ -23,7 +23,7 @@ class order_manager(object):
         rp = rospkg.RosPack()
         pkg_path = rp.get_path('pkg_task5')
         self.file_path = pkg_path + '/config/package_priority.yaml'
-        rospy.Subscriber("/ros_iot_bridge/mqtt/sub", msgMqttSub, self.func_callback_topic_my_topic)
+        rospy.Subscriber("/ros_iot_bridge/mqtt/sub", msgMqttSub, self.func_callback_online_order)
 
         self.location = rospy.Publisher("/location", pkgLocation, queue_size=0)
         self.yaml_data = ""
@@ -33,7 +33,7 @@ class order_manager(object):
 
         # self.data = _
 
-    def func_callback_topic_my_topic(self, my_msg):
+    def func_callback_online_order(self, my_msg):
         # print(my_msg.message)
         data = json.loads(my_msg.message)
         order_id = data["order_id"]
@@ -59,7 +59,7 @@ class order_manager(object):
             if data[pkg][3] == items :
                 if pkg not in self.pkg_list:
                     self.pkg_list.append(pkg)
-                    return pkg
+                    return items[0]+pkg
                     break
         
     def load_yaml(self):

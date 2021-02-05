@@ -23,7 +23,7 @@ class Ur5_1Moveit:
         rospy.init_node('node_ur5_1', anonymous=True)
         self._robot_ns = '/'  + arg_robot_name
         self._planning_group = "manipulator"
-        
+        self.high_priority_pkg = []
         sys.argv.append(arg_robot_name) 
         self._robot = moveit_commander.RobotCommander(robot_description= self._robot_ns + "/robot_description", ns=self._robot_ns)
         self._scene = moveit_commander.PlanningSceneInterface(ns=self._robot_ns)
@@ -48,7 +48,20 @@ class Ur5_1Moveit:
         self._pkg_path = rp.get_path('pkg_task4')
         self._file_path = self._pkg_path + '/config/saved_trajectories_ur5_1/'
         rospy.loginfo('\033[94m' + " >>> Ur5_1Moveit init done." + '\033[0m')
+        
+    def func_callback_online_order(self, my_msg):
+        order_id = my_msg.order_id
+        pkg_location = my_msg.pkg_location
+        # if len(self.high_priority_pkg) > 1 :
+        self.high_priority_pkg.append(pkg_location)
+        self.high_priority_pkg.sort(reverse=True)
+                
+            # sort_array.append(location[1])
+            # self.high_priority_pkg.append(pkg_location)
 
+        # else:
+        # data_sort = data.sort(reverse=True)
+            # self.high_priority_pkg.append(pkg_location)
         
     def go_to_predefined_pose(self, arg_pose_name):
         '''This is for moving the arm to difined pose'''
@@ -81,13 +94,13 @@ class Ur5_1Moveit:
     def moveit_hard_play_planned_path_from_file(self, arg_file_path, arg_file_name, arg_max_attempts):
         '''This function allows maltipal attempts for playing saved trajectory'''
 
-	number_attempts = 0
-        flag_success = False
-        while ( (number_attempts <= arg_max_attempts) and (flag_success is False) ):
-        	number_attempts += 1
-        	flag_success = self.moveit_play_planned_path_from_file(arg_file_path, arg_file_name)
-        	rospy.loginfo("attempts: {}".format(number_attempts) )
-        return flag_success
+        number_attempts = 0
+            flag_success = False
+            while ( (number_attempts <= arg_max_attempts) and (flag_success is False) ):
+                number_attempts += 1
+                flag_success = self.moveit_play_planned_path_from_file(arg_file_path, arg_file_name)
+                rospy.loginfo("attempts: {}".format(number_attempts) )
+            return flag_success
 
 
     def error_corrector(self, *args):
@@ -149,6 +162,15 @@ class Ur5_1Moveit:
             vacuum_start.start('ur5_1', False)
             rospy.loginfo('\033[94m' + "Placing Package"+ str(location) +" Successfully Execute ." + '\033[0m')
 
+    def VargiBot(self):
+            '''Main drop function'''
+
+        if (len(self.high_priority_pkg)):
+            plocation = self.high_priority_pkg[0]
+            location = plocation[-2]+plocation[-1]
+            self.pick_place_locator(location)
+        else:
+            return
 
     def __del__(self):
         '''Destructor'''
@@ -163,17 +185,22 @@ def main():
 
         ur5_1 = Ur5_1Moveit('ur5_1')
 
+        rospy.Subscriber("/location", pkgLocation, ur5_1.func_callback_online_order)
+
         ur5_1.goto_drop()
+
+        while not rospy.is_shutdown():
+            ur5_1.VargiBot()
         
-        ur5_1.pick_place_locator("00")
-        ur5_1.pick_place_locator("01")
-        ur5_1.pick_place_locator("02")
-        ur5_1.pick_place_locator("10")
-        ur5_1.pick_place_locator("11")
-        ur5_1.pick_place_locator("12")
-        ur5_1.pick_place_locator("20")
-        ur5_1.pick_place_locator("22")
-        ur5_1.pick_place_locator("30")
+        # ur5_1.pick_place_locator("00")
+        # ur5_1.pick_place_locator("01")
+        # ur5_1.pick_place_locator("02")
+        # ur5_1.pick_place_locator("10")
+        # ur5_1.pick_place_locator("11")
+        # ur5_1.pick_place_locator("12")
+        # ur5_1.pick_place_locator("20")
+        # ur5_1.pick_place_locator("22")
+        # ur5_1.pick_place_locator("30")
 
 
         del ur5_1
