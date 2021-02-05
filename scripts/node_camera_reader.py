@@ -31,7 +31,7 @@ class MainaReader:
         rp = rospkg.RosPack()
         pkg_path = rp.get_path('pkg_task5')
         self._file_path = pkg_path + '/config/package_priority.yaml'
-        self._boilercode = {'package_details': {'package_colour': {}}}
+        self._boilercode = {'package_details': {}}
         self._bridge = CvBridge()
         self.PREASENT_PKG = "non"
         self.STOP_ONCE = 0
@@ -40,6 +40,8 @@ class MainaReader:
         self._pkg_colour = {}
         self._gSheet_update = {}
         self._subForLimitedTime = ""
+        self.package_name_pub = rospy.Publisher('package_name', packageName, queue_size=0)
+        self.package_ideal_pub = rospy.Publisher('package_ideal', packageIdeal, queue_size=0)
 
     def func_callback(self, data):
 
@@ -47,8 +49,7 @@ class MainaReader:
                 The global values are there so that the start and
                     stop command ONLY ONCE for each pakage         '''
   
-        package_name_pub = rospy.Publisher('package_name', packageName, queue_size=0)
-        package_ideal_pub = rospy.Publisher('package_ideal', packageIdeal, queue_size=0)
+        
         index = 0
         
         # This is to check is 'ur5' or any package is under camera
@@ -78,7 +79,7 @@ class MainaReader:
                         package_model_colour = packageName()
                         package_model_colour.colour = self._pkg_colour[package_model_No]
                         self.PREASENT_PKG = package_model_No
-                        package_name_pub.publish(package_model_colour)
+                        self.package_name_pub.publish(package_model_colour)
 
                 # This block is for stopping the belt
                 if self.STOP_ONCE == 0:
@@ -87,7 +88,7 @@ class MainaReader:
                         self.STOP_ONCE = 1
                         ideal_flag = packageIdeal()
                         ideal_flag.Ideal = True
-                        package_ideal_pub.publish(ideal_flag)
+                        self.package_ideal_pub.publish(ideal_flag)
                         self.start_once = 0
                         self.start_Once = 0
 
@@ -114,31 +115,28 @@ class MainaReader:
         column = 0 if x < 150 else (1 if x >130 and x < 400 else 2)
         row = 0 if y < 320 else (1 if y > 320 and y < 500 else (2 if y > 500 and y < 650 else 3))
         position_1 = "packagen"+str(row)+str(column)
-        position_2 = [int(row), int(column), str(colour)]
+        item = "Medicine" if colour == "red" else ("Food" if colour == "yellow" else "Clothes")
+        position_2 = [int(row), int(column), str(colour), item]
 
         if len(self._pkg_colour) <= 12:
-
-            # if position_1 not in self._pkg_colour.keys():
 
             self._pkg_colour[position_1] = colour
             self._gSheet_update[position_1] = position_2
 
-
-
         if len(self._pkg_colour) == 12:
 
-            self._boilercode["package_details"]["package_colour"] = self._gSheet_update
+            self._boilercode["package_details"] = self._gSheet_update
             # print self._boilercode
             t = threading.Thread(name="Update",
                                 target=Param.creat_pata,
                                 args=[self._boilercode])
             t.start()
 
-        #     try :
-        #         with open(self._file_path,'w') as file_open:
-        #             yaml.dump(self._boilercode, file_open, default_flow_style=False)
-        #     except:
-        #         return False
+            try :
+                with open(self._file_path,'w') as file_open:
+                    yaml.dump(self._boilercode, file_open, default_flow_style=False)
+            except:
+                return False
 
             self._subForLimitedTime.unregister()
 

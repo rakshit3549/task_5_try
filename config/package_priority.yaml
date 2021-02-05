@@ -1,14 +1,61 @@
 package_details:
-  package_colour:
-    packagen00: red
-    packagen01: yellow
-    packagen02: green
-    packagen10: green
-    packagen11: yellow
-    packagen12: red
-    packagen20: green
-    packagen21: red
-    packagen22: yellow
-    packagen30: yellow
-    packagen31: green
-    packagen32: red
+  packagen00:
+  - 0
+  - 0
+  - red
+  - Medicine
+  packagen01:
+  - 0
+  - 1
+  - yellow
+  - Food
+  packagen02:
+  - 0
+  - 2
+  - green
+  - Clothes
+  packagen10:
+  - 1
+  - 0
+  - green
+  - Clothes
+  packagen11:
+  - 1
+  - 1
+  - yellow
+  - Food
+  packagen12:
+  - 1
+  - 2
+  - red
+  - Medicine
+  packagen20:
+  - 2
+  - 0
+  - green
+  - Clothes
+  packagen21:
+  - 2
+  - 1
+  - red
+  - Medicine
+  packagen22:
+  - 2
+  - 2
+  - yellow
+  - Food
+  packagen30:
+  - 3
+  - 0
+  - yellow
+  - Food
+  packagen31:
+  - 3
+  - 1
+  - green
+  - Clothes
+  packagen32:
+  - 3
+  - 2
+  - red
+  - Medicine

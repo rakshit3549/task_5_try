@@ -33,7 +33,7 @@ class Para_grn(object):
         #                                                 'packagen00': [0, 0, 'red'], 'packagen01': [0, 1, 'yellow'],
         #                                                 'packagen02': [0, 2, 'green'], 'packagen21': [2, 1, 'red']}}}
 
-        data = datas["package_details"]["package_colour"]
+        data = datas["package_details"]
         sorted_keys = sorted(data.keys())
         for key in sorted_keys:
             final_para = {"qty_invet":"1"}

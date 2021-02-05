@@ -1,0 +1,2 @@
+string order_id
+string pkg_location

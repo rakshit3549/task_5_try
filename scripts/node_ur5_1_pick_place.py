@@ -74,7 +74,9 @@ class Ur5_1Moveit:
             return ret
         except:
             return False
-
+        finally:
+            if file_open is not None:
+                file_open.close()
 
     def moveit_hard_play_planned_path_from_file(self, arg_file_path, arg_file_name, arg_max_attempts):
         '''This function allows maltipal attempts for playing saved trajectory'''
