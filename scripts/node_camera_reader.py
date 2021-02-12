@@ -40,8 +40,8 @@ class MainaReader:
         self._pkg_colour = {}
         self._gSheet_update = {}
         self._subForLimitedTime = ""
-        self.package_name_pub = rospy.Publisher('package_name', packageName, queue_size=0)
-        self.package_ideal_pub = rospy.Publisher('package_ideal', packageIdeal, queue_size=0)
+        self.package_name_pub = rospy.Publisher('/package_name', packageName, queue_size=0)
+        self.package_ideal_pub = rospy.Publisher('/package_ideal', packageIdeal, queue_size=0)
 
     def func_callback(self, data):
 
@@ -78,6 +78,8 @@ class MainaReader:
                         print("{} has been detected".format(package_model_No))
                         package_model_colour = packageName()
                         package_model_colour.colour = self._pkg_colour[package_model_No]
+                        ##################################
+                        package_model_colour.pkgLocationId = package_model_No
                         self.PREASENT_PKG = package_model_No
                         self.package_name_pub.publish(package_model_colour)
 
@@ -128,7 +130,7 @@ class MainaReader:
             self._boilercode["package_details"] = self._gSheet_update
             # print self._boilercode
             t = threading.Thread(name="Update",
-                                target=Param.creat_pata,
+                                target=Param.creat_inventory_pata,
                                 args=[self._boilercode])
             t.start()
 
@@ -173,7 +175,7 @@ def main():
     # flag = False
     camera_2 = MainaReader()
 
-    # Param.creat_pata("hiii")
+    # Param.creat_inventory_pata("hiii")
 
     # 1. Initialize the Subscriber Node.
     rospy.init_node('camera_reader', anonymous=True)

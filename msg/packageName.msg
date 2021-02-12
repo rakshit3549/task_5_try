@@ -1,1 +1,2 @@
 string colour
+string pkgLocationId

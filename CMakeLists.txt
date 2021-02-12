@@ -54,6 +54,7 @@ find_package(catkin REQUIRED COMPONENTS
    packageName.msg
    packageIdeal.msg
    pkgLocation.msg
+   orderStatus.msg
  )
 
 ## Generate services in the 'srv' folder

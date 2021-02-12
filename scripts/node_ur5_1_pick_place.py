@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 '''                             This Node is responsible for controlling the ur5_1 arm
-                                    which does the segregation of package                               '''
+                                    which does the segregation of package
+'''
 
 import rospy
 import moveit_commander
@@ -11,6 +12,8 @@ import rospkg
 import yaml
 import time
 import sys
+# from parameter_generator import Param
+from pkg_task5.msg import orderStatus
 from conveStart_vacuuStart import vacuum_start
 
 
@@ -24,7 +27,8 @@ class Ur5_1Moveit:
         self._robot_ns = '/'  + arg_robot_name
         self._planning_group = "manipulator"
         self.high_priority_pkg = []
-        sys.argv.append(arg_robot_name) 
+        sys.argv.append(arg_robot_name)
+        self._order_status_pub = rospy.Publisher('/orderStatus', orderStatus, queue_size=0)
         self._robot = moveit_commander.RobotCommander(robot_description= self._robot_ns + "/robot_description", ns=self._robot_ns)
         self._scene = moveit_commander.PlanningSceneInterface(ns=self._robot_ns)
         self._group = moveit_commander.MoveGroupCommander(self._planning_group, robot_description= self._robot_ns + "/robot_description", ns=self._robot_ns)
@@ -45,7 +49,7 @@ class Ur5_1Moveit:
             '\033[94m' + "Group Names: {}".format(self._group_names) + '\033[0m')
 
         rp = rospkg.RosPack()
-        self._pkg_path = rp.get_path('pkg_task4')
+        self._pkg_path = rp.get_path('pkg_task5')
         self._file_path = self._pkg_path + '/config/saved_trajectories_ur5_1/'
         rospy.loginfo('\033[94m' + " >>> Ur5_1Moveit init done." + '\033[0m')
         
@@ -53,7 +57,7 @@ class Ur5_1Moveit:
         order_id = my_msg.order_id
         pkg_location = my_msg.pkg_location
         # if len(self.high_priority_pkg) > 1 :
-        self.high_priority_pkg.append(pkg_location)
+        self.high_priority_pkg.append([pkg_location,order_id])
         self.high_priority_pkg.sort(reverse=True)
                 
             # sort_array.append(location[1])
@@ -138,13 +142,13 @@ class Ur5_1Moveit:
         self.moveit_hard_play_planned_path_from_file(self._file_path, 'zero_to_drop.yaml', 5)
 
 
-    def pick_place_locator(self, location):
+    def pick_place_locator(self, order_id, location):
         pick_location = "drop_to_"+str(location)+".yaml"
         drop_location = str(location)+"_to_drop.yaml"
-        self.pick_place_pkg(pick_location, drop_location, location)
+        self.pick_place_pkg(order_id, pick_location, drop_location, location)
 
 
-    def pick_place_pkg(self, pick_location, drop_location, location):
+    def pick_place_pkg(self,order_id, pick_location, drop_location, location):
             '''This is to move the arm to the location'''
 
             rospy.loginfo('\033[94m' + "Picking Package"+ str(location) + '\033[0m')
@@ -160,6 +164,12 @@ class Ur5_1Moveit:
             if flag_success != True:
                 self.error_corrector(drop_location, True)
             vacuum_start.start('ur5_1', False)
+
+            order_status = orderStatus()
+            order_status.arm = 'ur5_1'
+            order_status.orderId = order_id
+            self._order_status_pub.publish(order_status)
+            
             rospy.loginfo('\033[94m' + "Placing Package"+ str(location) +" Successfully Execute ." + '\033[0m')
 
     def VargiBot(self):
@@ -167,8 +177,10 @@ class Ur5_1Moveit:
 
         if (len(self.high_priority_pkg)):
             plocation = self.high_priority_pkg[0]
-            location = plocation[-2]+plocation[-1]
-            self.pick_place_locator(location)
+            location = plocation[0][-2:]
+            order_id = plocation[1]
+            self.high_priority_pkg.remove(plocation)
+            self.pick_place_locator(order_id,location)
         else:
             return
 

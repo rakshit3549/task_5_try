@@ -6,17 +6,19 @@
 import rospy
 import moveit_commander
 import moveit_msgs.msg
-import cv2
+# import cv2
 import actionlib
 import rospkg
 import yaml
 import time
 import sys
-from cv_bridge import CvBridge, CvBridgeError
-from pyzbar.pyzbar import decode
-from sensor_msgs.msg import Image
-from pkg_task4.msg import packageName
-from pkg_task4.msg import packageIdeal
+
+# from cv_bridge import CvBridge, CvBridgeError
+# from pyzbar.pyzbar import decode
+# from sensor_msgs.msg import Image
+from pkg_task5.msg import orderStatus
+from pkg_task5.msg import packageName
+from pkg_task5.msg import packageIdeal
 from conveStart_vacuuStart import vacuum_start
 
 
@@ -29,7 +31,7 @@ class Ur5_2Moveit:
         rospy.init_node('node_ur5_2', anonymous=True)
         self._robot_ns = '/'  + arg_robot_name
         self._planning_group = "manipulator"
-        
+        self._order_status_pub = rospy.Publisher('/orderStatus', orderStatus, queue_size=0)
         # sys.argv.append(arg_robot_name) 
         self._robot = moveit_commander.RobotCommander(robot_description= self._robot_ns + "/robot_description", ns=self._robot_ns)
         self._scene = moveit_commander.PlanningSceneInterface(ns=self._robot_ns)
@@ -40,10 +42,10 @@ class Ur5_2Moveit:
         self._planning_frame = self._group.get_planning_frame()
         self._eef_link = self._group.get_end_effector_link()
         self._group_names = self._robot.get_group_names()
-        self._bridge = CvBridge()
+        # self._bridge = CvBridge()
         self._package_ideal = False
         self._start_flage = True
-        self._package_array = ["yellow"]
+        self._package_array = []
         self._pkg_colour = {}
 
 
@@ -55,7 +57,7 @@ class Ur5_2Moveit:
             '\033[94m' + "Group Names: {}".format(self._group_names) + '\033[0m')
 
         rp = rospkg.RosPack()
-        self._pkg_path = rp.get_path('pkg_task4')
+        self._pkg_path = rp.get_path('pkg_task5')
         self._file_path = self._pkg_path + '/config/saved_trajectories_ur5_2/'
 
         rospy.loginfo('\033[94m' + " >>> Ur5_2Moveit init done." + '\033[0m')
@@ -136,7 +138,7 @@ class Ur5_2Moveit:
         return flag_success
 
 
-    def pick_place_pkg(self, drop_location, pick_location, PrasentPkgColour):
+    def pick_place_pkg(self, drop_location, pick_location, PrasentPkgColour, pesentPackageName):
             '''This is to move the arm to the box location'''
 
             rospy.loginfo('\033[94m' + "Picking "+ PrasentPkgColour +" Package." + '\033[0m')
@@ -158,17 +160,23 @@ class Ur5_2Moveit:
             if flag_success != True:
                 flag_success = self.error_corrector(pick_location)
 
+            order_status = orderStatus()
+            order_status.arm = 'ur5_2'
+            order_status.orderId = pesentPackageName
+            self._order_status_pub.publish(order_status)
+
+            rospy.loginfo('\033[94m' + "Placing Package"+ str(location) +" Successfully Execute ." + '\033[0m')
 
     def VargiBot(self):
         '''Main drop function'''
 
         if (len(self._package_array)):
-            PrasentPkgColour = self._package_array[0]
-
+            PrasentPkgColour = self._package_array[0][0]
+            pesentPackageName = self._package_array[0][1]
+            self._package_array.pop(0)
             drop_location = "pick_to_"+PrasentPkgColour+".yaml"
             pick_location = PrasentPkgColour+"_to_pick.yaml"
-            self.pick_place_pkg(drop_location, pick_location, PrasentPkgColour)
-            self._package_array.pop(0)
+            self.pick_place_pkg(drop_location, pick_location, PrasentPkgColour, pesentPackageName)
             self._package_ideal = False
 
         else:
@@ -178,9 +186,10 @@ class Ur5_2Moveit:
     def func_callback_by_packageName(self, package_name):
         '''This function update the package colour '''
 
-        self._pesent_package = package_name.colour
-        print("This is from service message {}".format(self._pesent_package))
-        self._package_array.append(self._pesent_package)
+        pesentPackageColor = package_name.colour
+        pesentPackageName = package_name.pkgLocationId
+        print("This is from service message {}".format(pesentPackageColor))
+        self._package_array.append([pesentPackageColor, pesentPackageName])
 
 
     def func_callback_by_packageIdeal(self, package_ideal):
@@ -203,9 +212,9 @@ def main():
 
     ur5_2 = Ur5_2Moveit('ur5_2')
 
-    rospy.Subscriber("package_name", packageName, ur5_2.func_callback_by_packageName)
+    rospy.Subscriber("/package_name", packageName, ur5_2.func_callback_by_packageName)
 
-    rospy.Subscriber("package_ideal", packageIdeal, ur5_2.func_callback_by_packageIdeal)
+    rospy.Subscriber("/package_ideal", packageIdeal, ur5_2.func_callback_by_packageIdeal)
 
     ur5_2.goto_pick()
 
