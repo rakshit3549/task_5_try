@@ -21,7 +21,7 @@ class Para_grn(object):
         """
         super(Para_grn, self).__init__()
         self.arg = arg
-        self.CLIENT_BRIDGE = actionlib.SimpleActionClient('/action_ros_iot', msgRosIotAction)
+        # self.CLIENT_BRIDGE = actionlib.SimpleActionClient('/action_ros_iot', msgRosIotAction)
         rospy.loginfo("This Action server is up, we can send results!")
 
     def send_para(self, Id, datas):
@@ -94,7 +94,7 @@ class Para_grn(object):
                     # ROS_IOT bridge for updation the Google spread sheet.
 
                     self.send_para("Inventory", final_para)
-                    time.sleep(6)
+                    time.sleep(3)
 
     def order_update(self, arm, data):
         """

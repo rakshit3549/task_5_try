@@ -29,7 +29,7 @@ class Ur5Moveit:
 
             return vacuumGripperResponse(service_response.result)
         except:
-            print("Service call failed")
+            print("vacuumGripper Service call failed")
 
 
 def start(robot_name, boolean):

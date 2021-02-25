@@ -22,11 +22,11 @@ class order_manager(object):
         pkg_path = rp.get_path('pkg_task5')
         self.file_path = pkg_path + '/config/package_priority.yaml'
         rospy.Subscriber("/ros_iot_bridge/mqtt/sub", msgMqttSub, self.func_callback_online_order)
-        rospy.Subscriber("/orderstatus", orderStatus, self.func_callback_order_status)
+        rospy.Subscriber("/orderStatus", orderStatus, self.func_callback_order_status)
 
         self.location = rospy.Publisher("/location", pkgLocation, queue_size=0)
         self.yaml_data = ""
-        self.pkg_list = []
+        self.pkg_list = ["packagen31","packagen31","packagen32"]
         self.savedOrdersForDispatch = {}
         self.savedOrdersForShipping = {}
         self.dispatOrder = []
@@ -43,10 +43,6 @@ class order_manager(object):
         # print(data)
         # print(type(data))
 
-        # hii = json.dumps(data)
-        # print(hii)
-        # print(type(hii))
-
 
         order_id = data["order_id"]
         item = data["item"]
@@ -60,16 +56,18 @@ class order_manager(object):
             self.onceflage = False
 
         package_location = pkgLocation()
-        package_location.pkg_location, fullpkgName = self.get_location(item, order_id)
+        package_location.pkg_location, pkgNameSentFordisp = self.get_location(item, order_id)
         package_location.order_id = str(order_id)
         self.location.publish(package_location)
-        self.savedOrdersForShipping[fullpkgName] = incomingOrder
+        print("to pick message",package_location)
+        self.savedOrdersForShipping[pkgNameSentFordisp] = incomingOrder
 
         # print(self.savedOrdersForDispatch['1001'])
 
     def func_callback_order_status(self, orderstatus):
 
         # timeString = {}
+        print("Order-Manager-incommung-orderstatus",orderstatus)
         upadteFromArm = orderstatus.arm
         order_identity = orderstatus.orderId
 
@@ -86,39 +84,21 @@ class order_manager(object):
         else:
             order_details = self.savedOrdersForShipping[order_identity]
             jsonDict = json.loads(order_details)
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print(jsonDict)
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
             shipped_item = jsonDict["item"]
 
             estimTime = 1 if shipped_item == "Medicine" else (
                         3 if shipped_item == "Food" else 5)
             
-            estimatedTime=(datetime.now()+timedelta(days = estimTime)).strftime("%Y-%m-%d")
+            estimatedTime = (datetime.now()+timedelta(days = estimTime)).strftime("%d-%m-%Y")
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",estimatedTime)
             index = order_details.find('}')
             addEstimTimeToData = timeString+', "estimTime":"%s"'%(estimatedTime)
             final_order_details = order_details[:index]+addEstimTimeToData+order_details[index:]
 
-        #order_details is string conta perfect order
 
-        # orderInStr = json.dumps(order_details)
-
-
-        
-        # print(type(updateDateTime))
-        # order_details["updateDateTime"] = updateDateTime
-
-        
-
-        # jsonDict = json.loads(timeString)
-        # print(jsonDict)
-        # order_details.update(jsonDict)
-        # print(order_details)
-
-        # final_order_details = json.loads(order_details)
-        print(final_order_details)
-        print(type(final_order_details))
-        # final_order_details.replace("'",'"')
+        # print(final_order_details)
+        # print(type(final_order_details))
         # print(final_order_details)
         Param.order_update(upadteFromArm,final_order_details)
 
@@ -133,28 +113,34 @@ class order_manager(object):
 
     def get_location(self, items, order_id):
         data = self.yaml_data["package_details"]
+        # print(type(data))
+        # print("yaml_data", data)
         # self.pkg_list=[]
         # items = 'Food'
         for pkg in data:
             if data[pkg][3] == items :
                 if pkg not in self.pkg_list:
                     self.pkg_list.append(pkg)
-                    return items[0]+pkg, pkg
+                    print("!!!!!",items[0],pkg )
+                    return str(items[0])+pkg, pkg
                     break
         
     def load_yaml(self):
         try:
             with open(self.file_path) as file:
                 self.yaml_data = yaml.load(file)
+                
                 # print(self.yaml_data)
-                # print(type(self.yaml_data))
+                # print(type("loaded package loketion", self.yaml_data))
+                if file is not None:
+                    file.close()
         except Exception as e:
             raise e
-        finally:
-            if file is not None:
-                file.close()
+            
 
 if __name__ == '__main__':
+
+    time.sleep(8)
 
     try:
         # 1. Initialize ROS Node

@@ -1,0 +1,19 @@
+<launch>
+
+    <!-- Launch Task-4 Simulation Environment in Gazebo -->
+    <include file="$(find pkg_vb_sim)/launch/task5_simulation.launch" />
+
+    <include file="$(find pkg_vb_sim)/launch/two_ur5_move_group.launch" />
+
+    <!-- This Node reads the package location and stops the conveyor belt at desired package location -->
+    <!-- <node name= "node_camera_reader" pkg= "pkg_task4" type="node_camera_reader.py" output="screen"/> -->
+
+    <!-- This Node is responsible for controlling the ur5_1 arm which does the segregation of package -->
+    <!-- <node name= "node_ur5_1_pick_place" pkg= "pkg_task4" type="node_ur5_1_pick_place.py" output="screen"/> -->
+
+    <!-- This Node is responsible for controlling the ur5_2 arm which place the required package on the conveyor belt -->
+    <!-- <node name= "node_ur5_2_pick_place" pkg= "pkg_task4" type="node_ur5_2_pick_place.py" output="screen"/> -->
+
+
+
+</launch>

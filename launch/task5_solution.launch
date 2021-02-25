@@ -5,15 +5,30 @@
 
     <include file="$(find pkg_vb_sim)/launch/two_ur5_move_group.launch" />
 
+    <node name= "node_online_order_manager" pkg= "pkg_task5" type="node_online_order_manager.py" output="screen"/>
+
     <!-- This Node reads the package location and stops the conveyor belt at desired package location -->
-    <!-- <node name= "node_camera_reader" pkg= "pkg_task4" type="node_camera_reader.py" output="screen"/> -->
+    <node name= "node_camera_reader" pkg= "pkg_task5" type="node_camera_reader.py" output="screen"/>
 
     <!-- This Node is responsible for controlling the ur5_1 arm which does the segregation of package -->
-    <!-- <node name= "node_ur5_1_pick_place" pkg= "pkg_task4" type="node_ur5_1_pick_place.py" output="screen"/> -->
+    <node name= "node_ur5_1_pick_place" pkg= "pkg_task5" type="node_ur5_1_pick_place.py" output="screen"/>
 
     <!-- This Node is responsible for controlling the ur5_2 arm which place the required package on the conveyor belt -->
-    <!-- <node name= "node_ur5_2_pick_place" pkg= "pkg_task4" type="node_ur5_2_pick_place.py" output="screen"/> -->
+    <node name= "node_ur5_2_pick_place" pkg= "pkg_task5" type="node_ur5_2_pick_place.py" output="screen"/>
 
+
+    <!-- <node name= "parameter_generator" pkg= "pkg_task5" type="parameter_generator.py" output="screen"/> -->
+    <rosparam file ="$(find pkg_ros_iot_bridge)/config/config_pyiot.yaml"/>
+    <node name= "node_action_server_ros_iot_bridge" pkg= "pkg_ros_iot_bridge" type="node_action_server_ros_iot_bridge.py" output="screen"/>
+
+<!-- Recording Bag File for Submission -->
+    <arg name="record" default="true"/>
+    <arg name="rec_name" default="t5.bag"/>
+
+    <group if="$(arg record)">
+        <node name="rosbag_record_pick" pkg="rosbag" type="record"
+       args="record -O $(find pkg_task5)/bag_files/$(arg rec_name) --chunksize=10 /eyrc/vb/ur5_1/vacuum_gripper/logical_camera/ur5_1 /eyrc/vb/ur5_2/vacuum_gripper/logical_camera/ur5_2" output="screen"/>
+ </group>
 
 
 </launch>
